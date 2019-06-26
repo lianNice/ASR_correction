@@ -5,10 +5,10 @@ The goal of the project is to build a model which will be capable of understand 
 
 Sample translation (polish language):
 
-Input sentence: szesnastego kwietnia rosja zakończyła operacje w czeczenii tymczasem sztabkę nadal ne zdecydował rozpocząć dwudziestego trzeciego kwietnia od północy operację wojskową w górskim rejonie szali szatą wied jedno i sześć że jul
+**Input sentence**: *szesnastego kwietnia rosja zakończyła operacje w czeczenii tymczasem sztabkę nadal ne zdecydował rozpocząć dwudziestego trzeciego kwietnia od północy operację wojskową w górskim rejonie szali szatą wied jedno i sześć że jul*
 
-Predicted translation: szesnastego kwietnia rosja zakończyła operację w czeczenii tymczasem sztab generalny zdecydował rozpocząć dwudziestego trzeciego kwietnia od północy operację wojskową w górskim rejonie szali szatoj wiedieno i serżen-jur
+**Predicted translation**: *szesnastego kwietnia rosja zakończyła operację w czeczenii tymczasem sztab generalny zdecydował rozpocząć dwudziestego trzeciego kwietnia od północy operację wojskową w górskim rejonie szali szatoj wiedieno i serżen-jur*
 
-Actual translation: szesnastego kwietnia rosja zakończyła operację w czeczenii tymczasem sztab generalny zdecydował rozpocząć dwudziestego trzeciego kwietnia od północy operację wojskową w górskim rejonie szali szatoj wiedieno i serżen-jur
+**Actual translation**: *szesnastego kwietnia rosja zakończyła operację w czeczenii tymczasem sztab generalny zdecydował rozpocząć dwudziestego trzeciego kwietnia od północy operację wojskową w górskim rejonie szali szatoj wiedieno i serżen-jur*
 
 
