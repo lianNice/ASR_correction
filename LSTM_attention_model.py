@@ -94,7 +94,6 @@ with open('nkjp.txt', encoding='utf-8') as f:
     word2vec[word] = vec
 print('Found %s word vectors.' % len(word2vec))
 
-
 print('Filling pre-trained embeddings...')
 num_words = min(MAX_NUM_WORDS, len(word2idx_inputs) + 1)
 embedding_matrix = np.zeros((num_words, EMBEDDING_DIM))
@@ -103,7 +102,6 @@ for word, i in word2idx_inputs.items():
     embedding_vector = word2vec.get(word)
     if embedding_vector is not None:
       embedding_matrix[i] = embedding_vector
-
 
 embedding_layer = Embedding(
   num_words,
@@ -240,10 +238,8 @@ decoder_model = Model(
   outputs=[decoder_outputs, s, c]
 )
 
-
 idx2word_eng = {v:k for k, v in word2idx_inputs.items()}
 idx2word_trans = {v:k for k, v in word2idx_outputs.items()}
-
 
 def decode_sequence(input_seq):
 
@@ -273,7 +269,6 @@ def decode_sequence(input_seq):
 
   return ' '.join(output_sentence)
 
-
 encoder_model.save('model/encoder_model.h5')
     
 with open('model/word2idx_outputs.pickle','wb') as handle:
@@ -287,7 +282,6 @@ with open('model/decode.pickle','wb') as handle:
     
 print('Model saved to disk')
 
-
 while True:
   i = np.random.choice(len(input_texts))
   input_seq = encoder_inputs[i:i+1]
@@ -300,5 +294,3 @@ while True:
   ans = input("Continue? [Y/n]")
   if ans and ans.lower().startswith('n'):
     break
-
-
