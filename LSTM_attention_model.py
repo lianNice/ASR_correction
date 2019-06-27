@@ -13,12 +13,6 @@ if len(K.tensorflow_backend._get_available_gpus()) > 0:
   from keras.layers import CuDNNLSTM as LSTM
   from keras.layers import CuDNNGRU as GRU
 
-def softmax_over_time(x):
-  assert(K.ndim(x) > 2)
-  e = K.exp(x - K.max(x, axis=1, keepdims=True))
-  s = K.sum(e, axis=1, keepdims=True)
-  return e / s
-
 BATCH_SIZE = 64
 EPOCHS = 100
 LATENT_DIM = 256
@@ -27,6 +21,56 @@ NUM_SAMPLES = 2000
 MAX_SEQUENCE_LENGTH = 100
 MAX_NUM_WORDS = 20000
 EMBEDDING_DIM = 100
+
+def softmax_over_time(x):
+  assert(K.ndim(x) > 2)
+  e = K.exp(x - K.max(x, axis=1, keepdims=True))
+  s = K.sum(e, axis=1, keepdims=True)
+  return e / s
+
+def one_step_attention(h, st_1):
+
+  st_1 = attn_repeat_layer(st_1)
+  x = attn_concat_layer([h, st_1])
+  x = attn_dense1(x)
+  alphas = attn_dense2(x)
+  context = attn_dot([alphas, h])
+
+  return context
+
+def stack_and_transpose(x):
+  x = K.stack(x)
+  x = K.permute_dimensions(x, pattern=(1, 0, 2))
+  return x
+
+def decode_sequence(input_seq):
+
+  enc_out = encoder_model.predict(input_seq)
+  target_seq = np.zeros((1, 1))
+  target_seq[0, 0] = word2idx_outputs['<sos>']
+  eos = word2idx_outputs['<eos>']
+  
+  s = np.zeros((1, LATENT_DIM_DECODER))
+  c = np.zeros((1, LATENT_DIM_DECODER))
+
+  output_sentence = []
+  for _ in range(max_len_target):
+    o, s, c = decoder_model.predict([target_seq, enc_out, s, c])
+        
+    idx = np.argmax(o.flatten())
+
+    if eos == idx:
+      break
+
+    word = ''
+    if idx > 0:
+      word = idx2word_trans[idx]
+      output_sentence.append(word)
+
+    target_seq[0, 0] = idx
+
+  return ' '.join(output_sentence)
+
 
 input_texts = [] 
 target_texts = []
@@ -94,6 +138,7 @@ with open('nkjp.txt', encoding='utf-8') as f:
     word2vec[word] = vec
 print('Found %s word vectors.' % len(word2vec))
 
+
 print('Filling pre-trained embeddings...')
 num_words = min(MAX_NUM_WORDS, len(word2idx_inputs) + 1)
 embedding_matrix = np.zeros((num_words, EMBEDDING_DIM))
@@ -102,6 +147,7 @@ for word, i in word2idx_inputs.items():
     embedding_vector = word2vec.get(word)
     if embedding_vector is not None:
       embedding_matrix[i] = embedding_vector
+
 
 embedding_layer = Embedding(
   num_words,
@@ -143,16 +189,6 @@ attn_dense1 = Dense(10, activation='tanh')
 attn_dense2 = Dense(1, activation=softmax_over_time)
 attn_dot = Dot(axes=1) 
 
-def one_step_attention(h, st_1):
-
-  st_1 = attn_repeat_layer(st_1)
-  x = attn_concat_layer([h, st_1])
-  x = attn_dense1(x)
-  alphas = attn_dense2(x)
-  context = attn_dot([alphas, h])
-
-  return context
-
 decoder_lstm = LSTM(LATENT_DIM_DECODER, return_state=True)
 decoder_dense = Dense(num_words_output, activation='softmax')
 
@@ -176,11 +212,6 @@ for t in range(max_len_target):
 
   decoder_outputs = decoder_dense(o)
   outputs.append(decoder_outputs)
-
-def stack_and_transpose(x):
-  x = K.stack(x)
-  x = K.permute_dimensions(x, pattern=(1, 0, 2))
-  return x
 
 stacker = Lambda(stack_and_transpose)
 outputs = stacker(outputs)
@@ -238,36 +269,9 @@ decoder_model = Model(
   outputs=[decoder_outputs, s, c]
 )
 
+
 idx2word_eng = {v:k for k, v in word2idx_inputs.items()}
 idx2word_trans = {v:k for k, v in word2idx_outputs.items()}
-
-def decode_sequence(input_seq):
-
-  enc_out = encoder_model.predict(input_seq)
-  target_seq = np.zeros((1, 1))
-  target_seq[0, 0] = word2idx_outputs['<sos>']
-  eos = word2idx_outputs['<eos>']
-  
-  s = np.zeros((1, LATENT_DIM_DECODER))
-  c = np.zeros((1, LATENT_DIM_DECODER))
-
-  output_sentence = []
-  for _ in range(max_len_target):
-    o, s, c = decoder_model.predict([target_seq, enc_out, s, c])
-        
-    idx = np.argmax(o.flatten())
-
-    if eos == idx:
-      break
-
-    word = ''
-    if idx > 0:
-      word = idx2word_trans[idx]
-      output_sentence.append(word)
-
-    target_seq[0, 0] = idx
-
-  return ' '.join(output_sentence)
 
 encoder_model.save('model/encoder_model.h5')
     
@@ -281,6 +285,7 @@ with open('model/decode.pickle','wb') as handle:
     pickle.dump(decode_sequence,handle)
     
 print('Model saved to disk')
+
 
 while True:
   i = np.random.choice(len(input_texts))
